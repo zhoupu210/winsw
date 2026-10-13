@@ -1,0 +1,32 @@
+name: Build WinSW for ARM64
+
+on:
+  workflow_dispatch: # 支持手动点击触发
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x' # 根据 WinSW 的目标框架选择，当前版本支持 .NET 7/8
+
+      - name: Publish WinSW for win-arm64
+        run: |
+          dotnet publish src/WinSW/WinSW.csproj `
+            -c Release `
+            -r win-arm64 `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -o ./dist
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: WinSW-arm64
+          path: ./dist/WinSW.exe
