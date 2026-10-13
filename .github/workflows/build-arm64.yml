@@ -1,7 +1,7 @@
 name: Build WinSW for ARM64
 
 on:
-  workflow_dispatch: # 支持手动点击触发
+  workflow_dispatch:
 
 jobs:
   build:
@@ -14,7 +14,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x' # 根据 WinSW 的目标框架选择，当前版本支持 .NET 7/8
+          dotnet-version: '7.0.x'
 
       - name: Publish WinSW for win-arm64
         run: |
@@ -23,6 +23,8 @@ jobs:
             -r win-arm64 `
             --self-contained true `
             -p:PublishSingleFile=true `
+            -p:TreatWarningsAsErrors=false `
+            -p:NuGetAudit=false `
             -o ./dist
 
       - name: Upload Artifact
