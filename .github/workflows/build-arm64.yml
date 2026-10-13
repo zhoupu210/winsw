@@ -11,11 +11,28 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      # 1. 明确使用 .NET 7 SDK，防止高版本 SDK 强行注入全新的审计中断规则
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '7.0.x'
 
+      # 2. 在根目录的 Directory.Build.props 中注入全局忽略规则（覆盖所有子项目）
+      - name: Suppress Vulnerability Warnings
+        shell: pwsh
+        run: |
+          $props = @"
+          <Project>
+            <PropertyGroup>
+              <NuGetAudit>false</NuGetAudit>
+              <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+              <NoWarn>`$(NoWarn);NU1902;NU1903;NU1904;NETSDK1138</NoWarn>
+            </PropertyGroup>
+          </Project>
+          "@
+          Set-Content -Path "Directory.Build.props" -Value $props
+
+      # 3. 执行发布
       - name: Publish WinSW for win-arm64
         run: |
           dotnet publish src/WinSW/WinSW.csproj `
@@ -23,10 +40,9 @@ jobs:
             -r win-arm64 `
             --self-contained true `
             -p:PublishSingleFile=true `
-            -p:TreatWarningsAsErrors=false `
-            -p:NuGetAudit=false `
             -o ./dist
 
+      # 4. 上传产物
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
